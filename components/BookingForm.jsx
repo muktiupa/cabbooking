@@ -1,93 +1,162 @@
 import React, { useState } from 'react';
 
-const BookingForm = () => {
-  const [activeTab, setActiveTab] = useState('CAR'); // State for active tab
-  const [activeOption, setActiveOption] = useState('withDriver'); // State for active option (With Driver/Self Drive)
+const BookingForm = ({ data, onBookingUpdate }) => {
+  const [withDriver, setWithDriver] = useState(false);
+  const [selfDrive, setSelfDrive] = useState(false);
+  const [pickupLocation, setPickupLocation] = useState('');
+  const [numPassengers, setNumPassengers] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [calculatedPrice, setCalculatedPrice] = useState(0);
 
-  // Function to handle tab selection
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-    setActiveOption('withDriver'); // Reset to 'With Driver' when switching tabs
+  const handleCheckboxChange = (option) => {
+    if (!selectedVehicle) return; // Ensure a vehicle is selected first
+
+    if (option === 'withDriver') {
+      setWithDriver(true);
+      setSelfDrive(false);
+      setCalculatedPrice(selectedVehicle.baseprice); // Set price for with driver
+    } else if (option === 'selfDrive') {
+      setSelfDrive(true);
+      setWithDriver(false);
+      setCalculatedPrice(selectedVehicle.selfdrive); // Set price for self-drive
+    }
+
+    updateBookingSummary();
+  };
+
+  const handleVehicleChange = (vehicleType) => {
+    const vehicle = data.find((v) => v.type === vehicleType);
+    setSelectedVehicle(vehicle);
+    setWithDriver(false);
+    setSelfDrive(false);
+    setCalculatedPrice(0); // Reset price until user selects "With Driver" or "Self Drive"
+  };
+
+  const handleInputChange = () => {
+    updateBookingSummary();
+  };
+
+  const updateBookingSummary = () => {
+    onBookingUpdate({
+      vehicleType: selectedVehicle?.type,
+      basePrice: calculatedPrice,
+      numPassengers,
+      startDate,
+      endDate,
+      withDriver,
+      selfDrive,
+    });
   };
 
   return (
-    <div>
-      {/* Booking Tabs */}
-      <div className="flex justify-around gap-4 mt-4 bg-white shadow-sm p-4 rounded-lg ">
-        {['CAR', 'SUV', 'TRAVELER'].map((type, index) => (
-          <div
-            key={index}
-            onClick={() => handleTabChange(type)}
-            className={`px-4 py-2 cursor-pointer ${
-              activeTab === type
-                ? 'border-b-2 border-green-500 text-green-500'
-                : 'border-b-2 border-transparent text-gray-700'
-            }`}
-          >
-            <h3 className="text-lg font-bold">{type}</h3>
-            <p className="text-sm text-gray-500">
-              Up to {index === 0 ? 4 : index === 1 ? 6 : 12} Person
-            </p>
-          </div>
-        ))}
+    <form className="bg-white shadow-md p-4 rounded-lg mt-6">
+      <div className="flex gap-4 mb-4">
+        {selectedVehicle && (
+          <>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={withDriver}
+                onChange={() => handleCheckboxChange('withDriver')}
+              />
+              With Driver
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={selfDrive}
+                onChange={() => handleCheckboxChange('selfDrive')}
+              />
+              Self Drive
+            </label>
+          </>
+        )}
       </div>
 
-      {/* Booking Options */}
-      <form className="bg-white shadow-md p-4 rounded-lg mt-6">
-        <div className="flex gap-4 mb-4">
-          <button
-            type="button"
-            className={`flex-1 py-2 rounded ${
-              activeOption === 'withDriver'
-                ? 'bg-[#34cc9c] text-white'
-                : 'border'
-            }`}
-            onClick={() => setActiveOption('withDriver')}
-          >
-            With Driver
-          </button>
-          <button
-            type="button"
-            className={`flex-1 py-2 rounded ${
-              activeOption === 'selfDrive'
-                ? 'bg-[#34cc9c] text-white'
-                : 'border'
-            } ${
-              activeTab === 'TRAVELER' ? 'cursor-not-allowed opacity-50' : ''
-            }`}
-            onClick={() => activeTab !== 'TRAVELER' && setActiveOption('selfDrive')}
-            disabled={activeTab === 'TRAVELER'}
-          >
-            Self Drive
-          </button>
-        </div>
-        <input
-          className="w-full border mb-4 p-2 rounded"
-          placeholder="Pickup Location"
-        />
-        <input
-          className="w-full border mb-4 p-2 rounded"
-          placeholder="Number of Passengers"
-        />
-        <div className='flex gap-4'>
+      <input
+        className="w-full border mb-4 p-2 rounded"
+        placeholder="Pickup Location"
+        value={pickupLocation}
+        onChange={(e) => {
+          setPickupLocation(e.target.value);
+          handleInputChange();
+        }}
+      />
+      <input
+        className="w-full border mb-4 p-2 rounded"
+        placeholder="Number of Passengers"
+        value={numPassengers}
+        onChange={(e) => {
+          setNumPassengers(e.target.value);
+          handleInputChange();
+        }}
+      />
+      <div className="flex gap-4">
         <input
           className="w-[49%] border mb-4 p-2 rounded"
           type="date"
-          placeholder="Select Starting Date"
+          value={startDate}
+          onChange={(e) => {
+            setStartDate(e.target.value);
+            handleInputChange();
+          }}
         />
         <input
           className="w-[49%] ml-4 border mb-4 p-2 rounded"
           type="date"
-          placeholder="Select End Date"
+          value={endDate}
+          onChange={(e) => {
+            setEndDate(e.target.value);
+            handleInputChange();
+          }}
         />
+      </div>
+
+      <select
+        className="w-full border mb-4 p-2 rounded"
+        onChange={(e) => handleVehicleChange(e.target.value)}
+      >
+        <option value="" disabled>
+          Select Vehicle
+        </option>
+        {data && data.length > 0 ? (
+          data.map((vehicle, index) => (
+            <option key={index} value={vehicle.type}>
+              {vehicle.type} - ₹{vehicle.baseprice} per {vehicle.calculation}
+            </option>
+          ))
+        ) : (
+          <option disabled>No vehicles available</option>
+        )}
+      </select>
+
+      {selectedVehicle && (
+        <div className="text-sm text-gray-700 mt-4">
+          <p>
+            Selected Vehicle: <strong>{selectedVehicle.type}</strong>
+          </p>
+          <p>
+            Base Price: <strong>₹{selectedVehicle.baseprice}</strong> (With
+            Driver)
+          </p>
+          <p>
+            Self-Drive Price: <strong>₹{selectedVehicle.selfdrive}</strong>
+          </p>
+          <p>
+            Booking Option:{' '}
+            <strong>
+              {withDriver ? 'With Driver' : selfDrive ? 'Self Drive' : 'None'}
+            </strong>
+          </p>
+          <p>
+            Calculated Price:{' '}
+            <strong>₹{calculatedPrice > 0 ? calculatedPrice : 'N/A'}</strong>
+          </p>
         </div>
-        <select className="w-full border mb-4 p-2 rounded">
-          <option>Maruti Dzire XL</option>
-          <option>Maruti i20</option>
-          <option>Maruti Omni</option>
-        </select>
-      </form>
-    </div>
+      )}
+    </form>
   );
 };
 
