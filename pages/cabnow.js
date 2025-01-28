@@ -5,8 +5,16 @@ import PhotoGallery from '../components/PhotoGallery';
 import CarDetails from '@/components/CarDetails';
 import BookingSummary from '@/components/BookingSummary';
 
-function cabnow({ data, base_url }) {
-  const [bookingDetails, setBookingDetails] = useState({}); // State to hold booking details
+function CabNow({ data, base_url }) {
+  const [bookingDetails, setBookingDetails] = useState({
+    vehicleType: '',
+    basePrice: 0,
+    numPassengers: '',
+    startDate: '',
+    endDate: '',
+    withDriver: false,
+    selfDrive: false,
+  }); // Initialize with an empty object or default values
 
   const handleBookingUpdate = (details) => {
     setBookingDetails(details);
@@ -17,11 +25,14 @@ function cabnow({ data, base_url }) {
       <Header />
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+          {/* Left section with booking form, photo gallery, and car details */}
           <div className="col-span-2">
             <BookingForm data={data} onBookingUpdate={handleBookingUpdate} />
             <PhotoGallery />
             <CarDetails />
           </div>
+
+          {/* Right section with the booking summary */}
           <div>
             <BookingSummary bookingDetails={bookingDetails} />
           </div>
@@ -31,7 +42,7 @@ function cabnow({ data, base_url }) {
   );
 }
 
-export default cabnow;
+export default CabNow;
 
 export async function getServerSideProps(context) {
   const base_url = process.env.NEXT_PUBLIC_BASEURL;
@@ -49,22 +60,22 @@ export async function getServerSideProps(context) {
       console.error('Expected data to be an array:', data);
       return {
         props: {
-          data: [],
+          data: [], // In case of error, return empty data array
         },
       };
     }
 
     return {
       props: {
-        data,
-        base_url, // Pass the fetched data directly
+        data, // Pass the fetched data to the component as props
+        base_url, // Pass base_url if needed for other API calls
       },
     };
   } catch (err) {
     console.error('API request error:', err);
     return {
       props: {
-        data: [], // Return an empty array on error
+        data: [], // Return an empty array in case of API error
       },
     };
   }

@@ -17,13 +17,13 @@ const BookingForm = ({ data, onBookingUpdate }) => {
       setWithDriver(true);
       setSelfDrive(false);
       setCalculatedPrice(selectedVehicle.baseprice); // Set price for with driver
+      updateBookingSummary('withDriver');
     } else if (option === 'selfDrive') {
       setSelfDrive(true);
       setWithDriver(false);
       setCalculatedPrice(selectedVehicle.selfdrive); // Set price for self-drive
+      updateBookingSummary('selfDrive');
     }
-
-    updateBookingSummary();
   };
 
   const handleVehicleChange = (vehicleType) => {
@@ -32,21 +32,27 @@ const BookingForm = ({ data, onBookingUpdate }) => {
     setWithDriver(false);
     setSelfDrive(false);
     setCalculatedPrice(0); // Reset price until user selects "With Driver" or "Self Drive"
+    updateBookingSummary();
   };
 
   const handleInputChange = () => {
     updateBookingSummary();
   };
 
-  const updateBookingSummary = () => {
+  const updateBookingSummary = (option) => {
     onBookingUpdate({
       vehicleType: selectedVehicle?.type,
-      basePrice: calculatedPrice,
+      basePrice:
+        option === 'withDriver'
+          ? selectedVehicle?.baseprice
+          : option === 'selfDrive'
+          ? selectedVehicle?.selfdrive
+          : 0,
       numPassengers,
       startDate,
       endDate,
-      withDriver,
-      selfDrive,
+      withDriver: option === 'withDriver',
+      selfDrive: option === 'selfDrive',
     });
   };
 

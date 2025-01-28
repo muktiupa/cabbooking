@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Footer from "./Footer";
 
 const BookingSummary = ({ bookingDetails }) => {
@@ -13,21 +13,44 @@ const BookingSummary = ({ bookingDetails }) => {
     endDate = "N/A",
   } = bookingDetails;
 
-  // Calculate the effective base fare based on the selection
-  const effectiveBasePrice = selfDrive ? selfdrivePrice : basePrice;
+  // Use calculated price based on the selection
+  const effectiveBasePrice = selfDrive
+    ? selfdrivePrice
+    : withDriver
+    ? basePrice
+    : 0;
 
   // Additional charges
   const serviceOnePrice = 250;
   const serviceTwoPrice = 250;
-  const totalServices = serviceOnePrice + serviceTwoPrice;
 
-  // GST and Grand Total Calculation
-  const gstAndFee = (effectiveBasePrice * 0.18).toFixed(2); // Example GST calculation
-  const grandTotal = (
-    effectiveBasePrice +
-    totalServices +
-    parseFloat(gstAndFee)
-  ).toFixed(2);
+  // GST calculation
+  const gstAndFee = ((effectiveBasePrice + serviceOnePrice + serviceTwoPrice) * 0.18).toFixed(2);
+
+  // State for selected services
+  const [isServiceOneSelected, setServiceOneSelected] = useState(false);
+  const [isServiceTwoSelected, setServiceTwoSelected] = useState(false);
+  const [grandTotal, setGrandTotal] = useState(
+    (effectiveBasePrice + parseFloat(gstAndFee)).toFixed(2)
+  );
+
+  // Recalculate grand total when services are selected/deselected
+  useEffect(() => {
+    const additionalServicesPrice = (isServiceOneSelected ? serviceOnePrice : 0) + (isServiceTwoSelected ? serviceTwoPrice : 0);
+    const updatedGrandTotal = (
+      effectiveBasePrice +
+      additionalServicesPrice +
+      parseFloat(gstAndFee)
+    ).toFixed(2);
+    setGrandTotal(updatedGrandTotal);
+  }, [isServiceOneSelected, isServiceTwoSelected, effectiveBasePrice, gstAndFee]);
+
+  // Determine the booking option
+  const bookingOption = selfDrive
+    ? "Self Drive"
+    : withDriver
+    ? "With Driver"
+    : "Not Selected";
 
   return (
     <div className="bg-white shadow-md p-4 rounded-lg">
@@ -49,37 +72,42 @@ const BookingSummary = ({ bookingDetails }) => {
       <div className="mt-4">
         <p className="text-sm text-gray-600">
           Booking Option:{" "}
-          <span className="font-semibold">
-            {selfDrive ? "Self Drive" : "With Driver"}
-          </span>
+          <span className="font-semibold">{bookingOption}</span>
         </p>
         <p className="text-sm text-gray-600">
-          Calculated Price:{" "}
-          <span className="font-semibold">₹{selfDrive ? selfdrivePrice : basePrice}</span>
+          Calculated Price: <strong>₹{effectiveBasePrice || 'N/A'}</strong>
         </p>
       </div>
 
-      {/* Add-on Services */}
+      {/* Service Options */}
       <div className="mt-4">
-        <label className="flex items-center mb-2">
-          <input type="checkbox" className="mr-2" />
-          Add Service/Product One - ₹{serviceOnePrice}
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={isServiceOneSelected}
+            onChange={() => setServiceOneSelected(!isServiceOneSelected)}
+          />
+          Service 1 (+₹250)
         </label>
-        <label className="flex items-center">
-          <input type="checkbox" className="mr-2" />
-          Add Service/Product Two - ₹{serviceTwoPrice}
+        <br />
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={isServiceTwoSelected}
+            onChange={() => setServiceTwoSelected(!isServiceTwoSelected)}
+          />
+          Service 2 (+₹250)
         </label>
       </div>
 
-      {/* GST and Grand Total */}
       <div className="mt-4">
         <p className="text-sm text-gray-600">
-          GST & Convenience Fee: ₹{gstAndFee}
+          GST (18%): <strong>₹{gstAndFee}</strong>
         </p>
-        <p className="text-sm text-gray-600">Discount Apply: ₹0.00</p>
-        <p className="font-bold text-lg mt-2">Grand Total: ₹{grandTotal}</p>
+        <p className="text-sm text-gray-600 font-semibold">
+          Grand Total: ₹{grandTotal}
+        </p>
       </div>
-{/* <h2>test code</h2> */}
       <Footer />
     </div>
   );
