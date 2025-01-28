@@ -79,7 +79,7 @@ const BookingSummary = ({ bookingDetails }) => {
         <p className="text-sm text-gray-600">Discount Apply: ₹0.00</p>
         <p className="font-bold text-lg mt-2">Grand Total: ₹{grandTotal}</p>
       </div>
-
+{/* <h2>test code</h2> */}
       <Footer />
     </div>
   );
